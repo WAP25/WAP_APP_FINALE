@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Valutazione Cantiere & Flusso Informativo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <img src="LOGO.png" alt="WAPSTYLE" class="logo" />
+    <div class="title">
+      <h1>Feedback Operativo Cantiere (Dipendente)</h1>
+      <div class="subtitle">Valutazione della Commessa, del Responsabile e della Squadra. I report sono centralizzati nella scheda 'Feedback_Cantiere'.</div>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <section class="form-card card">
+      <form id="valForm">
+        <fieldset class="group">
+          <legend>Dati principali</legend>
+          <label>Valutatore (il tuo nome)</label>
+          <input type="text" id="valutatore" placeholder="Es. Luigi Bianchi" required>
+
+          <label>Cantiere</label>
+          <input type="text" id="cantiere" placeholder="Es. Cantiere Via Roma" required>
+        </fieldset>
+        
+        <fieldset class="group">
+          <legend>A. Flusso Ufficio e Qualità della Commessa (1 = No / 4 = Sì)</legend>
+          <label>Istruzioni Chiare (documentazione, disegni, info)</label>
+          <div class="rating" data-name="chiarezza_doc"></div>
+
+          <label>Zero Attese Materiali (logistica e approvvigionamento efficienti)</label>
+          <div class="rating" data-name="gestione_logistica"></div>
+
+          <label>Supporto Ufficio Veloce (tempestività risposte e risoluzione problemi)</label>
+          <div class="rating" data-name="tempestivita_uff"></div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>B. Gestione del Responsabile (1 = No / 4 = Sì)</legend>
+          <label>Guida e Supporto (il Responsabile è di aiuto e supporto)</label>
+          <div class="rating" data-name="supporto_resp"></div>
+
+          <label>Sicurezza al Primo Posto (gestione attenta della sicurezza)</label>
+          <div class="rating" data-name="sicurezza_gest"></div>
+
+          <label>Ascolto e Rispetto (il Responsabile ascolta e rispetta le opinioni)</label>
+          <div class="rating" data-name="rispetto_resp"></div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>C. Squadra Operativa (1 = No / 4 = Sì)</legend>
+          <label>Collaborazione e Aiuto (lo spirito di squadra è alto)</label>
+          <div class="rating" data-name="collaborazione_team"></div>
+
+          <label>Ritmi Giusti (ritmi di lavoro gestibili e corretti)</label>
+          <div class="rating" data-name="armonia_team"></div>
+        </fieldset>
+        
+
+        <label for="note">Note Aggiuntive</label>
+        <textarea id="note" rows="4" placeholder="Appunti utili per la Commessa o l'Organizzazione..."></textarea>
+
+        <div class="actions">
+          <button type="button" id="btnPreview" class="btn secondary">Anteprima Punteggi Settoriali</button>
+          <button type="button" id="btnSend" class="btn primary">Invia Feedback Organizzativo</button>
+        </div>
+      </form>
+    </section>
+    
+    <aside class="admin-card card">
+      <div class="admin-top">
+        <h3>Admin — Storico</h3>
+        <div class="muted">Apri lo storico con PIN.</div>
+        <div class="row">
+          <input id="adminPin" placeholder="Inserisci PIN" />
+          <button id="btnAdmin" class="btn small">Accedi</button>
+        </div>
+      </div>
+
+      <div id="adminArea" class="admin-area" style="display:none;">
+        <div class="row" style="margin-bottom:8px;">
+          <input id="search" placeholder="Cerca per nome o cantiere..." />
+          <button id="exportCsv" class="btn small">Esporta CSV</button>
+          <button id="clearLocal" class="btn small alt">Elimina locali</button>
+        </div>
+        <div id="list" class="list"></div>
+      </div>
+    </aside>
+  </main>
+  <footer class="footer">WAPSTYLE — Sistema valutazione (prototipo)</footer>
+</div>
+
+<script src="feedback_cantiere.js"></script>
+</body>
+</html>
