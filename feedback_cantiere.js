@@ -1,8 +1,5 @@
 // IL TUO URL DI ESECUZIONE CORRETTO! (Ultimo URL fornito)
-const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbysDVldy0096e8JsSx3XshrfDUJskcah3_eW_1HeLWHmjnXJoBsigs1aL_4C_uBfmFe/exec"; 
-const ADMIN_PIN = "44232"; 
-
-function q(s){return document.querySelector(s)}
+const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxbFL726W2BfYw6P96gXsJyxZf0hCJacXOa6Nmwdph6pMoFVBenZPyB6ivy_vUvUljb/exec";function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
 
 // --- FUNZIONI DI BASE ---
