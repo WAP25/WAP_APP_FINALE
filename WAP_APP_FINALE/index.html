@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Valutazione WAPSTYLE - Muratore / Manovale</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <img src="LOGO.png" alt="WAPSTYLE" class="logo" />
+    <div class="title">
+      <h1>Valutazione - Muratore / Manovale</h1>
+      <div class="subtitle">Compila la scheda in modo rapido. I report vengono inviati a HR e salvati nello storico.</div>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <section class="form-card card">
+      <form id="valForm">
+        <fieldset class="group">
+          <legend>Dati principali</legend>
+          <label>Valutatore</label>
+          <input type="text" id="valutatore" placeholder="Es. Mario Rossi" required>
+
+          <label>Dipendente valutato</label>
+          <input type="text" id="valutato" placeholder="Es. Luigi Bianchi" required>
+
+          <label>Cantiere</label>
+          <input type="text" id="cantiere" placeholder="Es. Cantiere Via Roma" required>
+
+          <div class="row two">
+            <div>
+              <label>Ore lavorate</label>
+              <input type="number" id="ore" min="0" value="8">
+            </div>
+            <div>
+              <label>Incidenti segnalati</label>
+              <select id="incident">
+                <option value="no">No</option>
+                <option value="si">Sì</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>Prestazioni quantitative (1 = basso, 4 = alto)</legend>
+          <div class="crit">Rilavorazioni</div>
+          <div class="rating" data-name="rilavorazioni"></div>
+
+          <div class="crit">Completamento nei tempi</div>
+          <div class="rating" data-name="tempi"></div>
+
+          <div class="crit">Produttività</div>
+          <div class="rating" data-name="produttivita"></div>
+
+          <div class="crit">Sicurezza (rispetto procedure)</div>
+          <div class="rating" data-name="sicurezza"></div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>Prestazioni qualitative</legend>
+          <div class="crit">Qualità ed efficienza</div>
+          <div class="rating" data-name="qualita"></div>
+
+          <div class="crit">Competenze tecniche</div>
+          <div class="rating" data-name="competenze"></div>
+
+          <div class="crit">Collaborazione e comportamento</div>
+          <div class="rating" data-name="collaborazione"></div>
+        </fieldset>
+
+        <label>Osservazioni (opzionale)</label>
+        <textarea id="note" rows="4" placeholder="Appunti utili..."></textarea>
+
+        <div class="actions">
+          <button type="button" id="btnPreview" class="btn secondary">Anteprima</button>
+          <button type="button" id="btnSend" class="btn primary">Salva & Invia a HR</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="admin-card card">
+      <div class="admin-top">
+        <h3>Admin — Storico</h3>
+        <div class="muted">Apri lo storico con PIN.</div>
+        <div class="row">
+          <input id="adminPin" placeholder="Inserisci PIN" />
+          <button id="btnAdmin" class="btn small">Accedi</button>
+        </div>
+      </div>
+
+      <div id="adminArea" class="admin-area" style="display:none;">
+        <div class="row" style="margin-bottom:8px;">
+          <input id="search" placeholder="Cerca per nome o cantiere..." />
+          <button id="exportCsv" class="btn small">Esporta CSV</button>
+          <button id="clearLocal" class="btn small alt">Elimina locali</button>
+        </div>
+        <div id="list" class="list"></div>
+      </div>
+
+      <div class="info card small-card">
+        <strong>Invio automatico:</strong>
+        <div class="muted small">Endpoint Sheets:</div>
+        <div class="endpoint">Verifica il tuo script.js</div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">WAPSTYLE — Sistema valutazione (prototipo)</footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
