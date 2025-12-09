@@ -1,5 +1,5 @@
 // IL TUO URL DI ESECUZIONE CORRETTO! (Ultimo URL fornito)
-const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxbFL726W2BfYw6P96gXsJyxZf0hCJacXOa6Nmwdph6pMoFVBenZPyB6ivy_vUvUljb/exec";function q(s){return document.querySelector(s)}
+const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxK7ziP7zskpjj6VAoYjBuROihg0leyswkHrzrrnzsdOPByPStVQnhUfcrffOT_doAs/exec";function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
 
 // --- FUNZIONI DI BASE ---
