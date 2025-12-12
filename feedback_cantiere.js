@@ -46,9 +46,9 @@ function calcAverage(names){
 
 function calcTotal(){
     const ufficioNames = ['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff'];
-    // CORREZIONE NOMI: Allineati a 'equita_dec'
+    // Nomi dei campi allineati (HTML e Apps Script)
     const respNames = ['supporto_resp', 'sicurezza_gest', 'equita_dec']; 
-    // CORREZIONE NOMI: Allineati a 'collaborazione_mutua' e incluso 'accessibilita_lav'
+    // Nomi dei campi allineati (HTML e Apps Script)
     const squadraNames = ['collaborazione_mutua', 'accessibilita_lav', 'armonia_team'];
     
     const scoreUfficio = calcAverage(ufficioNames);
@@ -71,30 +71,34 @@ function saveLocal(record){
   localStorage.setItem('feedback_cantiere_v1', JSON.stringify(all));
 }
 
-// *** CORREZIONE CRITICA: Uso di FormData per risolvere il blocco CORS ***
+// *** CORREZIONE CRITICA PER INVIO MOBILE/AFFIDABILITÀ ***
 async function sendToGoogleSheets(record){
-  let sheetSuccess = false;
   
-  // 1. Converti l'oggetto 'record' in FormData
-  const formData = new FormData();
-  for (const key in record) {
-    formData.append(key, record[key]);
-  }
+  // 1. Converti l'oggetto 'record' in una stringa di query URL-encoded
+  const queryString = Object.keys(record).map(key => {
+    return encodeURIComponent(key) + '=' + encodeURIComponent(record[key]);
+  }).join('&');
   
   try{
     const sheetResp = await fetch(GOOGLE_SHEET_ENDPOINT, {
       method: 'POST',
-      // Rimuovi headers e mode: 'cors'. FormData gestisce l'header
-      body: formData 
+      // Usa 'no-cors' per la massima compatibilità con Apps Script
+      mode: 'no-cors', 
+      // Specifica il Content-Type per la stringa URL-encoded
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: queryString 
     });
-    // Attendi la risposta JSON dallo script App Script
-    const result = await sheetResp.json();
-    // Verifica se lo script Apps Script ha risposto con successo
-    sheetSuccess = sheetResp.ok && result.risposta === "successo";
+    
+    // Con 'no-cors', non possiamo leggere la risposta JSON.
+    // Dobbiamo fidarci che la richiesta sia partita.
+    return true; 
+    
   } catch(e) {
     console.error("Errore invio a Sheets:", e);
+    return false;
   }
-  return sheetSuccess;  
 }
 // *** FINE CORREZIONE CRITICA ***
 
@@ -109,14 +113,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   q('#btnSend').addEventListener('click', async ()=>{
+    const btn = q('#btnSend');
+    
     const valutatore = q('#valutatore').value.trim();
     const cantiere = q('#cantiere').value.trim();
     if(!valutatore || !cantiere){ alert('Inserire valutatore e cantiere.'); return; }
 
+    btn.disabled = true;
+    btn.innerText = 'Invio in corso...';
+    
     const scores = calcTotal();
 
     const record = {
-      id: 'fbk_'+Math.random().toString(36).slice(2,9),
+      // Nota: Rimosso 'id' che causava slittamento se presente in Apps Script
       timestamp: new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),  
       valutatore, cantiere,
       chiarezza_doc: getRatingValue('chiarezza_doc'),
@@ -124,22 +133,25 @@ document.addEventListener('DOMContentLoaded', ()=>{
       tempestivita_uff: getRatingValue('tempestivita_uff'),
       supporto_resp: getRatingValue('supporto_resp'),
       sicurezza_gest: getRatingValue('sicurezza_gest'),
-      // CORREZIONE CAMPO 1
       equita_dec: getRatingValue('equita_dec'), 
-      // CORREZIONE CAMPO 2
       collaborazione_mutua: getRatingValue('collaborazione_mutua'), 
-      // CORREZIONE CAMPO 3
       accessibilita_lav: getRatingValue('accessibilita_lav'),
       armonia_team: getRatingValue('armonia_team'),
+      
+      // I punteggi calcolati DEVONO essere inviati come parametri per Apps Script
       score_ufficio: scores.score_ufficio,
       score_resp: scores.score_resp,
       score_squadra: scores.score_squadra,
       total_score: scores.total_score,
+      
       note: q('#note').value.trim()
     };
 
     saveLocal(record);
     const ok = await sendToGoogleSheets(record);
+    
+    btn.disabled = false;
+    btn.innerText = 'Invia Feedback Organizzativo';
     
     if(ok) {
         alert('Feedback salvato nello storico locale. Invio a Google Sheets riuscito!');
@@ -173,7 +185,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const all = JSON.parse(localStorage.getItem('feedback_cantiere_v1')||'[]').slice().reverse();
     if(!all.length){ alert('Nessun feedback da esportare.'); return; }
     // Intestazioni CSV aggiornate
-    const header = ['id','timestamp','valutatore','cantiere','chiarezza_doc','gestione_logistica','tempestivita_uff','supporto_resp','sicurezza_gest','equita_dec','collaborazione_mutua','accessibilita_lav','armonia_team','score_ufficio','score_resp','score_squadra','total_score','note'];
+    const header = ['timestamp','valutatore','cantiere','chiarezza_doc','gestione_logistica','tempestivita_uff','score_ufficio','supporto_resp','sicurezza_gest','equita_dec','score_resp','collaborazione_mutua','accessibilita_lav','armonia_team','score_squadra','total_score','note'];
     const rows = all.map(r => header.map(h=>JSON.stringify(r[h]||'')).join(','));
     const csv = [header.join(','), ...rows].join('\n');
     const blob = new Blob([csv], {type:'text/csv'});
@@ -221,19 +233,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
       '--- Dettaglio Rating (1-4) ---',
       'Istruzioni Chiare: ' + it.chiarezza_doc,
       'Zero Attese Materiali: ' + it.gestione_logistica,
-      'Supporto Ufficio Veloce: ' + it.tempestivita_uff,
-      'Guida e Supporto: ' + it.supporto_resp,
-      'Sicurezza al Primo Posto: ' + it.sicurezza_gest,
-      'Equità Decisionale: ' + it.equita_dec, // Rinominato
-      'Collaborazione Team: ' + it.collaborazione_mutua, // Rinominato
-      'Accessibilità Lavori: ' + it.accessibilita_lav, // Aggiunto
-      'Ritmi Giusti: ' + it.armonia_team,
-      'Note: '+(it.note||'')
-    ].join('\n');
-    alert(s);
-  }
-
-  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  
-  renderList();
-});
+      'Supporto Ufficio
