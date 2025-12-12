@@ -43,21 +43,13 @@ function calcAverage(names){
 
 function calcTotal(){
     const ufficioNames = ['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff'];
-    const respNames = ['supporto_resp', 'sicurezza_gest', 'rispetto_resp'];
-    const squadraNames = ['collaborazione_team', 'armonia_team'];
+    // RESPONSABILE: Corretto 'rispetto_resp' in 'equita_dec'
+    const respNames = ['supporto_resp', 'sicurezza_gest', 'equita_dec']; 
+    // SQUADRA: Corretti i nomi e aggiunto 'accessibilita_lav' (il terzo voto mancante)
+    const squadraNames = ['collaborazione_mutua', 'accessibilita_lav', 'armonia_team']; 
     
     const scoreUfficio = calcAverage(ufficioNames);
-    const scoreResp = calcAverage(respNames);
-    const scoreSquadra = calcAverage(squadraNames);
-    
-    const totalAvg = (scoreUfficio + scoreResp + scoreSquadra) / 3;
-    
-    return {
-        score_ufficio: scoreUfficio,
-        score_resp: scoreResp,
-        score_squadra: scoreSquadra,
-        total_score: Math.round(totalAvg * 100) / 100
-    };
+    // ...
 }
 
 function saveLocal(record){
