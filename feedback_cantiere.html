@@ -29,34 +29,37 @@
         </fieldset>
         
         <fieldset class="group">
-          <legend>A. Flusso Ufficio e Qualità della Commessa (1 = No / 4 = Sì)</legend>
-          <label>Istruzioni Chiare (documentazione, disegni, info)</label>
+          <legend>A. Flusso Ufficio e Qualità della Commessa</legend>
+          <label>Istruzioni Chiare (documenti completi e aggiornati)</label>
           <div class="rating" data-name="chiarezza_doc"></div>
 
-          <label>Zero Attese Materiali (logistica e approvvigionamento efficienti)</label>
+          <label>Zero Attese Materiali (logistica e tempistica)</label>
           <div class="rating" data-name="gestione_logistica"></div>
 
-          <label>Supporto Ufficio Veloce (tempestività risposte e risoluzione problemi)</label>
+          <label>Supporto Ufficio Veloce (risposte in giornata)</label>
           <div class="rating" data-name="tempestivita_uff"></div>
         </fieldset>
-
+        
         <fieldset class="group">
-          <legend>B. Gestione del Responsabile (1 = No / 4 = Sì)</legend>
-          <label>Guida e Supporto (il Responsabile è di aiuto e supporto)</label>
+          <legend>B. Responsabile / Leadership in Cantiere</legend>
+          <label>Guida e Supporto (aiuto nell'esecuzione dei lavori)</label>
           <div class="rating" data-name="supporto_resp"></div>
-
-          <label>Sicurezza al Primo Posto (gestione attenta della sicurezza)</label>
+          
+          <label>Sicurezza al Primo Posto (gestione DPI e procedure)</label>
           <div class="rating" data-name="sicurezza_gest"></div>
 
-          <label>Ascolto e Rispetto (il Responsabile ascolta e rispetta le opinioni)</label>
-          <div class="rating" data-name="rispetto_resp"></div>
+          <label>Equità Decisionale (ascolto e rispetto)</label>
+          <div class="rating" data-name="equita_dec"></div>
         </fieldset>
 
         <fieldset class="group">
-          <legend>C. Squadra Operativa (1 = No / 4 = Sì)</legend>
-          <label>Collaborazione e Aiuto (lo spirito di squadra è alto)</label>
-          <div class="rating" data-name="collaborazione_team"></div>
+          <legend>C. Squadra Operativa</legend>
+          <label>Collaborazione Mutua (supporto tra colleghi)</label>
+          <div class="rating" data-name="collaborazione_mutua"></div>
 
+          <label>Accessibilità Lavori (spazi e strumenti adeguati)</label>
+          <div class="rating" data-name="accessibilita_lav"></div>
+          
           <label>Ritmi Giusti (ritmi di lavoro gestibili e corretti)</label>
           <div class="rating" data-name="armonia_team"></div>
         </fieldset>
@@ -89,12 +92,13 @@
           <button id="clearLocal" class="btn small alt">Elimina locali</button>
         </div>
         <div id="list" class="list"></div>
+        <div class="info card small-card" style="margin-top:12px">
+            <strong>NOTA:</strong> I dati qui visualizzati sono salvati solo sul tuo browser. L'unico invio esterno è a Google Sheets.
+        </div>
       </div>
     </aside>
   </main>
-  <footer class="footer">WAPSTYLE — Sistema valutazione (prototipo)</footer>
 </div>
-
 <script src="feedback_cantiere.js"></script>
 </body>
 </html>

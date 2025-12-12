@@ -1,6 +1,6 @@
-// IL TUO URL DI ESECUZIONE CORRETTO! (Aggiorna se hai un nuovo URL dopo un deployment)
-const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbxK7ziP7zskpjj6VAoYjBuROihg0leyswkHrzrrnzsdOPByPStVQnhUfcrffOT_doAs/exec";
-const ADMIN_PIN = "44232"; // Mantieni il tuo PIN
+// IL TUO URL DI ESECUZIONE CORRETTO!
+const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbysDVldy0096e8JsSx3XshrfDUJskcah3_eW_1HeLWHmjnXJoBsigs1aL_4C_uBfmFe/exec"; 
+const ADMIN_PIN = "44232"; 
 
 function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
@@ -28,11 +28,7 @@ function makeRatings(){
 
 function getRatingValue(name){
   const r = document.querySelector(`.rating[data-name="${name}"]`);
-  // Se l'elemento non viene trovato, usa 2 come valore predefinito
-  if(!r) {
-      console.warn(`Rating element with data-name="${name}" not found. Defaulting to 2.`);
-      return 2;
-  }
+  if(!r) return 2;
   const sel = r.querySelector('.rate-cell.sel');
   return sel ? Number(sel.dataset.val) : 2;
 }
@@ -50,9 +46,9 @@ function calcAverage(names){
 
 function calcTotal(){
     const ufficioNames = ['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff'];
-    // CORREZIONE NOMI: 'rispetto_resp' è stato rinominato 'equita_dec' in Apps Script
+    // CORREZIONE NOMI: Allineati a 'equita_dec'
     const respNames = ['supporto_resp', 'sicurezza_gest', 'equita_dec']; 
-    // CORREZIONE NOMI: 'collaborazione_team' rinominato 'collaborazione_mutua' e AGGIUNTO 'accessibilita_lav'
+    // CORREZIONE NOMI: Allineati a 'collaborazione_mutua' e incluso 'accessibilita_lav'
     const squadraNames = ['collaborazione_mutua', 'accessibilita_lav', 'armonia_team'];
     
     const scoreUfficio = calcAverage(ufficioNames);
@@ -75,11 +71,11 @@ function saveLocal(record){
   localStorage.setItem('feedback_cantiere_v1', JSON.stringify(all));
 }
 
-// *** CORREZIONE CRITICA DELLA RICHIESTA FETCH ***
+// *** CORREZIONE CRITICA: Uso di FormData per risolvere il blocco CORS ***
 async function sendToGoogleSheets(record){
   let sheetSuccess = false;
   
-  // 1. Conversione dell'oggetto 'record' in FormData
+  // 1. Converti l'oggetto 'record' in FormData
   const formData = new FormData();
   for (const key in record) {
     formData.append(key, record[key]);
@@ -88,11 +84,12 @@ async function sendToGoogleSheets(record){
   try{
     const sheetResp = await fetch(GOOGLE_SHEET_ENDPOINT, {
       method: 'POST',
-      // 2. RIMOZIONE DI headers e mode: 'cors'. FormData gestisce l'header Content-Type
+      // Rimuovi headers e mode: 'cors'. FormData gestisce l'header
       body: formData 
     });
-    // Si aspetta un JSON come risposta da doPost
+    // Attendi la risposta JSON dallo script App Script
     const result = await sheetResp.json();
+    // Verifica se lo script Apps Script ha risposto con successo
     sheetSuccess = sheetResp.ok && result.risposta === "successo";
   } catch(e) {
     console.error("Errore invio a Sheets:", e);
@@ -127,11 +124,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
       tempestivita_uff: getRatingValue('tempestivita_uff'),
       supporto_resp: getRatingValue('supporto_resp'),
       sicurezza_gest: getRatingValue('sicurezza_gest'),
-      // CORREZIONE CAMPO 1: allineato a Apps Script
+      // CORREZIONE CAMPO 1
       equita_dec: getRatingValue('equita_dec'), 
-      // CORREZIONE CAMPO 2: allineato a Apps Script
+      // CORREZIONE CAMPO 2
       collaborazione_mutua: getRatingValue('collaborazione_mutua'), 
-      // CORREZIONE CAMPO 3: AGGIUNTO accessibilita_lav
+      // CORREZIONE CAMPO 3
       accessibilita_lav: getRatingValue('accessibilita_lav'),
       armonia_team: getRatingValue('armonia_team'),
       score_ufficio: scores.score_ufficio,
@@ -147,9 +144,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(ok) {
         alert('Feedback salvato nello storico locale. Invio a Google Sheets riuscito!');
     } else {
-        alert('Attenzione: si è verificato un errore nell\'invio a Google Sheets. Riprova o verifica i Log di Apps Script!');
+        alert('Attenzione: si è verificato un errore nell\'invio a Google Sheets. Verifica l\'URL dello script e le autorizzazioni di accesso!');
     }
 
+    // Pulisce il form
     q('#cantiere').value=''; q('#note').value='';
     qa('.rate-cell').forEach(c=>c.classList.remove('sel'));
     makeRatings();  
@@ -157,7 +155,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     renderList();
   });
 
-  // Funzioni Admin/Storico... (il resto del codice non modificato)
+  // Funzioni Admin/Storico
   q('#btnAdmin').addEventListener('click', ()=>{
     const pin = q('#adminPin').value.trim();
     if(pin === ADMIN_PIN){
@@ -174,6 +172,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   q('#exportCsv').addEventListener('click', ()=>{
     const all = JSON.parse(localStorage.getItem('feedback_cantiere_v1')||'[]').slice().reverse();
     if(!all.length){ alert('Nessun feedback da esportare.'); return; }
+    // Intestazioni CSV aggiornate
     const header = ['id','timestamp','valutatore','cantiere','chiarezza_doc','gestione_logistica','tempestivita_uff','supporto_resp','sicurezza_gest','equita_dec','collaborazione_mutua','accessibilita_lav','armonia_team','score_ufficio','score_resp','score_squadra','total_score','note'];
     const rows = all.map(r => header.map(h=>JSON.stringify(r[h]||'')).join(','));
     const csv = [header.join(','), ...rows].join('\n');
