@@ -92,17 +92,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     const scores = calcTotal();
 
-    const record = {
+ const record = {
       id: 'fbk_'+Math.random().toString(36).slice(2,9),
-      timestamp: new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' }), 
+      timestamp: new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),  
       valutatore, cantiere,
       chiarezza_doc: getRatingValue('chiarezza_doc'),
       gestione_logistica: getRatingValue('gestione_logistica'),
       tempestivita_uff: getRatingValue('tempestivita_uff'),
       supporto_resp: getRatingValue('supporto_resp'),
       sicurezza_gest: getRatingValue('sicurezza_gest'),
-      rispetto_resp: getRatingValue('rispetto_resp'),
-      collaborazione_team: getRatingValue('collaborazione_team'),
+      // CAMPO 1: ERA 'rispetto_resp', ORA 'equita_dec' (come previsto da Apps Script)
+      equita_dec: getRatingValue('equita_dec'), 
+      // CAMPO 2: ERA 'collaborazione_team', ORA 'collaborazione_mutua' (come previsto da Apps Script)
+      collaborazione_mutua: getRatingValue('collaborazione_mutua'), 
+      // CAMPO 3: AGGIUNTO accessibilita_lav (era mancante)
+      accessibilita_lav: getRatingValue('accessibilita_lav'),
       armonia_team: getRatingValue('armonia_team'),
       score_ufficio: scores.score_ufficio,
       score_resp: scores.score_resp,
