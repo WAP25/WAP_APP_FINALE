@@ -46,9 +46,7 @@ function calcAverage(names){
 
 function calcTotal(){
     const ufficioNames = ['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff'];
-    // Nomi dei campi allineati (HTML e Apps Script)
     const respNames = ['supporto_resp', 'sicurezza_gest', 'equita_dec']; 
-    // Nomi dei campi allineati (HTML e Apps Script)
     const squadraNames = ['collaborazione_mutua', 'accessibilita_lav', 'armonia_team'];
     
     const scoreUfficio = calcAverage(ufficioNames);
@@ -66,33 +64,37 @@ function calcTotal(){
 }
 
 function saveLocal(record){
+  // Rimuovi la chiave 'id' che non viene usata nel foglio, solo nei dettagli locali
+  const recordToSave = {...record, id: 'fbk_'+Math.random().toString(36).slice(2,9) };
   const all = JSON.parse(localStorage.getItem('feedback_cantiere_v1')||'[]');
-  all.push(record);
+  all.push(recordToSave);
   localStorage.setItem('feedback_cantiere_v1', JSON.stringify(all));
 }
 
 // *** CORREZIONE CRITICA PER INVIO MOBILE/AFFIDABILITÀ ***
+// Il metodo più affidabile per Google Apps Script: URL-encoded + no-cors
 async function sendToGoogleSheets(record){
   
   // 1. Converti l'oggetto 'record' in una stringa di query URL-encoded
   const queryString = Object.keys(record).map(key => {
+    // Usiamo encodeURIComponent per gestire spazi e caratteri speciali nelle note
     return encodeURIComponent(key) + '=' + encodeURIComponent(record[key]);
   }).join('&');
   
   try{
     const sheetResp = await fetch(GOOGLE_SHEET_ENDPOINT, {
       method: 'POST',
-      // Usa 'no-cors' per la massima compatibilità con Apps Script
+      // Usa 'no-cors' per la massima compatibilità, specialmente su mobile
       mode: 'no-cors', 
-      // Specifica il Content-Type per la stringa URL-encoded
+      // Specifica il Content-Type corretto
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: queryString 
     });
     
-    // Con 'no-cors', non possiamo leggere la risposta JSON.
-    // Dobbiamo fidarci che la richiesta sia partita.
+    // Con 'no-cors', non possiamo leggere sheetResp.json().
+    // Se la richiesta è completata senza un errore di rete (catch), assumiamo il successo.
     return true; 
     
   } catch(e) {
@@ -124,8 +126,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
     
     const scores = calcTotal();
 
+    // L'oggetto record è allineato con i nomi dei parametri attesi da Apps Script
     const record = {
-      // Nota: Rimosso 'id' che causava slittamento se presente in Apps Script
       timestamp: new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),  
       valutatore, cantiere,
       chiarezza_doc: getRatingValue('chiarezza_doc'),
@@ -138,7 +140,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
       accessibilita_lav: getRatingValue('accessibilita_lav'),
       armonia_team: getRatingValue('armonia_team'),
       
-      // I punteggi calcolati DEVONO essere inviati come parametri per Apps Script
+      // I punteggi calcolati
       score_ufficio: scores.score_ufficio,
       score_resp: scores.score_resp,
       score_squadra: scores.score_squadra,
@@ -147,16 +149,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
       note: q('#note').value.trim()
     };
 
-    saveLocal(record);
     const ok = await sendToGoogleSheets(record);
     
     btn.disabled = false;
     btn.innerText = 'Invia Feedback Organizzativo';
+
+    // Salviamo localmente solo DOPO il tentativo di invio
+    saveLocal(record); 
     
     if(ok) {
         alert('Feedback salvato nello storico locale. Invio a Google Sheets riuscito!');
     } else {
-        alert('Attenzione: si è verificato un errore nell\'invio a Google Sheets. Verifica l\'URL dello script e le autorizzazioni di accesso!');
+        alert('Attenzione: si è verificato un errore nell\'invio a Google Sheets. I dati sono stati salvati LCL (Locale) ma non è garantito che siano arrivati a Sheets. Controlla l\'URL dello script e le autorizzazioni di accesso!');
     }
 
     // Pulisce il form
@@ -167,7 +171,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     renderList();
   });
 
-  // Funzioni Admin/Storico
+  // Funzioni Admin/Storico (RESTO DEL CODICE INVARIATO)
   q('#btnAdmin').addEventListener('click', ()=>{
     const pin = q('#adminPin').value.trim();
     if(pin === ADMIN_PIN){
@@ -184,7 +188,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   q('#exportCsv').addEventListener('click', ()=>{
     const all = JSON.parse(localStorage.getItem('feedback_cantiere_v1')||'[]').slice().reverse();
     if(!all.length){ alert('Nessun feedback da esportare.'); return; }
-    // Intestazioni CSV aggiornate
+    // Intestazioni CSV allineate alle 17 colonne del Foglio Google
     const header = ['timestamp','valutatore','cantiere','chiarezza_doc','gestione_logistica','tempestivita_uff','score_ufficio','supporto_resp','sicurezza_gest','equita_dec','score_resp','collaborazione_mutua','accessibilita_lav','armonia_team','score_squadra','total_score','note'];
     const rows = all.map(r => header.map(h=>JSON.stringify(r[h]||'')).join(','));
     const csv = [header.join(','), ...rows].join('\n');
@@ -233,4 +237,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
       '--- Dettaglio Rating (1-4) ---',
       'Istruzioni Chiare: ' + it.chiarezza_doc,
       'Zero Attese Materiali: ' + it.gestione_logistica,
-      'Supporto Ufficio
+      'Supporto Ufficio Veloce: ' + it.tempestivita_uff,
+      'Guida e Supporto: ' + it.supporto_resp,
+      'Sicurezza al Primo Posto: ' + it.sicurezza_gest,
+      'Equità Decisionale: ' + it.equita_dec,
+      'Collaborazione Team: ' + it.collaborazione_mutua,
+      'Accessibilità Lavori: ' + it.accessibilita_lav,
+      'Ritmi Giusti: ' + it.armonia_team,
+      'Note: '+(it.note||'')
+    ].join('\n');
+    alert(s);
+  }
+
+  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  
+  renderList();
+});
