@@ -1,4 +1,5 @@
-const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycby9Kbln9FXbLidq1lObaNd09vOfLPGhbtu2EURB7ZYGOcBCgX5rH_HjDqlwQ0gWsixB/exec"; 
+const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UViuDefzbZFzjoAgLAbkp3flArkLRiOnJnQmXGZAEm94gBz5Zjp_6BzbPwwe/exec"; 
+const ADMIN_PIN = "44232"; 
 
 function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
@@ -25,6 +26,13 @@ function getRatingValue(name){
   return sel ? Number(sel.dataset.val) : 2;
 }
 
+function calcAverage(names){
+    if (names.length === 0) return 0;
+    let total = 0;
+    names.forEach(k => { total += ((getRatingValue(k) - 1) / 3) * 100; });
+    return Math.round((total / names.length) * 100) / 100;
+}
+
 async function sendData(record){
   const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
   try {
@@ -41,26 +49,48 @@ document.addEventListener('DOMContentLoaded', ()=>{
   makeRatings();
   q('#btnSend').addEventListener('click', async ()=>{
     const btn = q('#btnSend');
-    const v = q('#valutatore').value;
-    const c = q('#cantiere').value;
-    if(!v || !c){ alert('Compila i campi!'); return; }
+    const v = q('#valutatore').value.trim();
+    const c = q('#cantiere').value.trim();
+    if(!v || !c){ alert('Inserisci Valutatore e Cantiere!'); return; }
     
     btn.disabled = true;
+    btn.innerText = "Invio...";
+
+    // Calcolo punteggi per le 3 aree
+    const sUff = calcAverage(['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff']);
+    const sResp = calcAverage(['supporto_resp', 'sicurezza_gest', 'equita_dec']);
+    const sSquad = calcAverage(['collaborazione_mutua', 'accessibilita_lav', 'armonia_team']);
+    const sTot = Math.round(((sUff + sResp + sSquad) / 3) * 100) / 100;
+
     const record = {
-      form_type: 'cantiere', // IDENTIFICATORE PER LO SCRIPT MASTER
+      form_type: 'cantiere',
       timestamp: new Date().toLocaleString('it-IT'),
-      valutatore: v, cantiere: c,
+      valutatore: v,
+      cantiere: c,
       chiarezza_doc: getRatingValue('chiarezza_doc'),
       gestione_logistica: getRatingValue('gestione_logistica'),
       tempestivita_uff: getRatingValue('tempestivita_uff'),
-      score_ufficio: 'calcolato_da_script', // opzionale
+      score_ufficio: sUff + "%",
       supporto_resp: getRatingValue('supporto_resp'),
-      // ... aggiungi tutti i campi che servono per il cantiere
-      note: q('#note').value
+      sicurezza_gest: getRatingValue('sicurezza_gest'),
+      equita_dec: getRatingValue('equita_dec'),
+      score_resp: sResp + "%",
+      collaborazione_mutua: getRatingValue('collaborazione_mutua'),
+      accessibilita_lav: getRatingValue('accessibilita_lav'),
+      armonia_team: getRatingValue('armonia_team'),
+      score_squadra: sSquad + "%",
+      total_score: sTot + "%",
+      note: q('#note').value.trim()
     };
 
-    if(await sendData(record)){ alert('Inviato!'); q('#valForm').reset(); makeRatings(); }
-    else { alert('Errore!'); }
+    if(await sendData(record)){ 
+      alert('Feedback Cantiere inviato!'); 
+      q('#valForm').reset(); 
+      makeRatings(); 
+    } else { 
+      alert('Errore nell\'invio!'); 
+    }
     btn.disabled = false;
+    btn.innerText = "Invia Feedback Organizzativo";
   });
 });

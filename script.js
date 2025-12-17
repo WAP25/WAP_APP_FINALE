@@ -1,4 +1,4 @@
-const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycby9Kbln9FXbLidq1lObaNd09vOfLPGhbtu2EURB7ZYGOcBCgX5rH_HjDqlwQ0gWsixB/exec"; // STESSO URL DI SOPRA
+const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UViuDefzbZFzjoAgLAbkp3flArkLRiOnJnQmXGZAEm94gBz5Zjp_6BzbPwwe/exec"; 
 
 function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
@@ -41,25 +41,44 @@ document.addEventListener('DOMContentLoaded', ()=>{
   makeRatings();
   q('#btnSend').addEventListener('click', async ()=>{
     const btn = q('#btnSend');
-    const v = q('#valutatore').value;
-    const m = q('#muratore').value;
-    if(!v || !m){ alert('Compila i campi!'); return; }
+    const v = q('#valutatore').value.trim();
+    const m = q('#muratore').value.trim();
+    const c = q('#cantiere').value.trim();
+
+    if(!v || !m || !c){ alert('Compila i campi Valutatore, Muratore e Cantiere!'); return; }
     
     btn.disabled = true;
+    btn.innerText = "Invio...";
+
+    // Calcolo punteggio muratore
+    const r1 = getRatingValue('qualita_lavoro');
+    const r2 = getRatingValue('velocita');
+    const r3 = getRatingValue('pulizia');
+    const r4 = getRatingValue('puntualita');
+    const sTot = Math.round(((r1+r2+r3+r4 - 4) / 12) * 100);
+
     const record = {
-      form_type: 'muratore', // IDENTIFICATORE PER LO SCRIPT MASTER
+      form_type: 'muratore',
       timestamp: new Date().toLocaleString('it-IT'),
-      valutatore: v, muratore: m, cantiere: q('#cantiere').value,
-      qualita_lavoro: getRatingValue('qualita_lavoro'),
-      velocita: getRatingValue('velocita'),
-      pulizia: getRatingValue('pulizia'),
-      puntualita: getRatingValue('puntualita'),
-      score_totale: '100%',
-      note: q('#note').value
+      valutatore: v,
+      muratore: m,
+      cantiere: c,
+      qualita_lavoro: r1,
+      velocita: r2,
+      pulizia: r3,
+      puntualita: r4,
+      score_totale: sTot + "%",
+      note: q('#note').value.trim()
     };
 
-    if(await sendData(record)){ alert('Valutazione Muratore Inviata!'); q('#valForm').reset(); makeRatings(); }
-    else { alert('Errore!'); }
+    if(await sendData(record)){ 
+      alert('Valutazione Muratore inviata!'); 
+      q('#valForm').reset(); 
+      makeRatings(); 
+    } else { 
+      alert('Errore nell\'invio!'); 
+    }
     btn.disabled = false;
+    btn.innerText = "Invia Valutazione Muratore";
   });
 });
