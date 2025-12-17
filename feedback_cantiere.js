@@ -1,5 +1,5 @@
-const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UViuDefzbZFzjoAgLAbkp3flArkLRiOnJnQmXGZAEm94gBz5Zjp_6BzbPwwe/exec"; 
 const ADMIN_PIN = "44232"; 
+const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UViuDefzbZFzjoAgLAbkp3flArkLRiOnJnQmXGZAEm94gBz5Zjp_6BzbPwwe/exec"; 
 
 function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
@@ -33,34 +33,18 @@ function calcAverage(names){
     return Math.round((total / names.length) * 100) / 100;
 }
 
-async function sendToGoogleSheets(record){
-  // Aggiungiamo esplicitamente il tipo per lo script Master
-  record.form_type = 'cantiere';
-  
-  const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
-  try {
-    await fetch(GOOGLE_SHEET_ENDPOINT, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: queryString 
-    });
-    return true;
-  } catch(e) { return false; }
-}
-
 document.addEventListener('DOMContentLoaded', ()=>{
   makeRatings();
+  
   q('#btnSend').addEventListener('click', async ()=>{
     const btn = q('#btnSend');
     const v = q('#valutatore').value.trim();
     const c = q('#cantiere').value.trim();
-    if(!v || !c){ alert('Inserisci Valutatore e Cantiere!'); return; }
-    
+    if(!v || !c){ alert('Mancano dati!'); return; }
+
     btn.disabled = true;
     btn.innerText = "Invio...";
 
-    // Calcolo punteggi per le 3 aree
     const sUff = calcAverage(['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff']);
     const sResp = calcAverage(['supporto_resp', 'sicurezza_gest', 'equita_dec']);
     const sSquad = calcAverage(['collaborazione_mutua', 'accessibilita_lav', 'armonia_team']);
@@ -87,12 +71,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
       note: q('#note').value.trim()
     };
 
-    if(await sendData(record)){ 
-      alert('Feedback Cantiere inviato!'); 
-      q('#valForm').reset(); 
-      makeRatings(); 
-    } else { 
-      alert('Errore nell\'invio!'); 
+    const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
+    
+    try {
+      await fetch(GOOGLE_SHEET_ENDPOINT, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: queryString 
+      });
+      alert('Feedback Cantiere Inviato!');
+      q('#valForm').reset();
+      makeRatings();
+    } catch(e) {
+      alert('Errore connessione');
     }
     btn.disabled = false;
     btn.innerText = "Invia Feedback Organizzativo";

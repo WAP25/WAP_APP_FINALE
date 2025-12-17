@@ -1,5 +1,6 @@
 const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UViuDefzbZFzjoAgLAbkp3flArkLRiOnJnQmXGZAEm94gBz5Zjp_6BzbPwwe/exec"; 
 
+
 function q(s){return document.querySelector(s)}
 function qa(s){return Array.from(document.querySelectorAll(s))}
 
@@ -25,44 +26,33 @@ function getRatingValue(name){
   return sel ? Number(sel.dataset.val) : 2;
 }
 
-function calcAverage(names){
-    let total = 0;
-    names.forEach(k => { total += ((getRatingValue(k) - 1) / 3) * 100; });
-    return Math.round((total / names.length) * 100) / 100;
-}
-
 document.addEventListener('DOMContentLoaded', ()=>{
   makeRatings();
   
   q('#btnSend').addEventListener('click', async ()=>{
     const btn = q('#btnSend');
+    const v = q('#valutatore').value.trim();
+    const m = q('#muratore').value.trim(); // Nome muratore
+    if(!v || !m){ alert('Mancano Valutatore o Muratore!'); return; }
+
     btn.disabled = true;
     btn.innerText = "Invio...";
 
-    const sUff = calcAverage(['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff']);
-    const sResp = calcAverage(['supporto_resp', 'sicurezza_gest', 'equita_dec']);
-    const sSquad = calcAverage(['collaborazione_mutua', 'accessibilita_lav', 'armonia_team']);
-    const sTot = Math.round(((sUff + sResp + sSquad) / 3) * 100) / 100;
-
+    // Mappatura forzata sulle 17 colonne per compatibilità
     const record = {
-      form_type: 'muratore', // <--- Fondamentale per scrivere nel foglio giusto
+      form_type: 'muratore',
       timestamp: new Date().toLocaleString('it-IT'),
-      valutatore: q('#valutatore').value,
-      cantiere: q('#cantiere').value, // Qui metterai il nome del muratore o cantiere come preferisci
-      chiarezza_doc: getRatingValue('chiarezza_doc'),
-      gestione_logistica: getRatingValue('gestione_logistica'),
-      tempestivita_uff: getRatingValue('tempestivita_uff'),
-      score_ufficio: sUff + "%",
-      supporto_resp: getRatingValue('supporto_resp'),
-      sicurezza_gest: getRatingValue('sicurezza_gest'),
-      equita_dec: getRatingValue('equita_dec'),
-      score_resp: sResp + "%",
-      collaborazione_mutua: getRatingValue('collaborazione_mutua'),
-      accessibilita_lav: getRatingValue('accessibilita_lav'),
-      armonia_team: getRatingValue('armonia_team'),
-      score_squadra: sSquad + "%",
-      total_score: sTot + "%",
-      note: q('#note').value
+      valutatore: v,
+      cantiere: m, // Scriviamo il nome del muratore nella colonna 'Cantiere'
+      chiarezza_doc: getRatingValue('qualita_lavoro'), // Mappato su colonna 4
+      gestione_logistica: getRatingValue('velocita'),   // Mappato su colonna 5
+      tempestivita_uff: getRatingValue('pulizia'),      // Mappato su colonna 6
+      score_ufficio: "", 
+      supporto_resp: getRatingValue('puntualita'),      // Mappato su colonna 8
+      sicurezza_gest: "", equita_dec: "", score_resp: "",
+      collaborazione_mutua: "", accessibilita_lav: "", armonia_team: "",
+      score_squadra: "", total_score: "",
+      note: q('#note').value.trim()
     };
 
     const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
