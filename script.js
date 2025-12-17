@@ -8,9 +8,7 @@ function makeRatings(){
     r.innerHTML = ''; 
     for(let i=1; i<=4; i++){
       const cell = document.createElement('div');
-      cell.className = 'rate-cell'; 
-      cell.innerText = i; 
-      cell.dataset.val = i;
+      cell.className = 'rate-cell'; cell.innerText = i; cell.dataset.val = i;
       cell.onclick = function(){
         r.querySelectorAll('.rate-cell').forEach(x => x.classList.remove('sel'));
         cell.classList.add('sel');
@@ -31,50 +29,50 @@ function getRatingValue(name){
 window.addEventListener('load', () => {
   makeRatings();
   const btn = q('#btnSend');
-  if(btn) {
-    btn.onclick = async function() {
-      const v = q('#valutatore').value.trim();
-      const valutato = q('#valutato').value.trim();
-      const c = q('#cantiere').value.trim();
+  if(!btn) return;
 
-      if(!v || !valutato || !c){ alert('Compila i campi obbligatori!'); return; }
+  btn.onclick = async () => {
+    const v = q('#valutatore').value.trim();
+    const vt = q('#valutato').value.trim();
+    const c = q('#cantiere').value.trim();
 
-      btn.disabled = true;
-      btn.innerText = "Invio in corso...";
+    if(!v || !vt || !c){ alert('Valutatore, Dipendente e Cantiere obbligatori!'); return; }
 
-      const data = new URLSearchParams();
-      data.append('form_type', 'muratore');
-      data.append('timestamp', new Date().toLocaleString('it-IT'));
-      data.append('valutatore', v);
-      data.append('valutato', valutato);
-      data.append('cantiere', c);
-      data.append('ore', q('#ore').value);
-      data.append('incident', q('#incident').value);
-      data.append('rilavorazioni', getRatingValue('rilavorazioni'));
-      data.append('tempi', getRatingValue('tempi'));
-      data.append('produttivita', getRatingValue('produttivita'));
-      data.append('sicurezza', getRatingValue('sicurezza'));
-      data.append('qualita', getRatingValue('qualita'));
-      data.append('competenze', getRatingValue('competenze'));
-      data.append('collaborazione', getRatingValue('collaborazione'));
-      data.append('total_score', "Calcolato");
-      data.append('note', q('#note').value.trim());
+    btn.disabled = true;
+    btn.innerText = "Invio...";
 
-      try {
-        await fetch(GOOGLE_SHEET_ENDPOINT, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: data
-        });
-        alert('Dati inviati con successo!');
-        q('#valForm').reset();
-        makeRatings();
-      } catch(e) {
-        alert('Errore tecnico durante l\'invio.');
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Salva & Invia a HR";
-      }
-    };
-  }
+    // Creazione URLSearchParams per invio sicuro di TUTTI i campi
+    const params = new URLSearchParams();
+    params.append('form_type', 'muratore');
+    params.append('timestamp', new Date().toLocaleString('it-IT'));
+    params.append('valutatore', v);
+    params.append('valutato', vt);
+    params.append('cantiere', c);
+    params.append('ore', q('#ore').value);
+    params.append('incident', q('#incident').value);
+    params.append('rilavorazioni', getRatingValue('rilavorazioni'));
+    params.append('tempi', getRatingValue('tempi'));
+    params.append('produttivita', getRatingValue('produttivita'));
+    params.append('sicurezza', getRatingValue('sicurezza'));
+    params.append('qualita', getRatingValue('qualita'));
+    params.append('competenze', getRatingValue('competenze'));
+    params.append('collaborazione', getRatingValue('collaborazione'));
+    params.append('total_score', "Inviato");
+    params.append('note', q('#note').value.trim());
+
+    try {
+      await fetch(GOOGLE_SHEET_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+      alert('Valutazione inviata correttamente!');
+      q('#valForm').reset();
+      makeRatings();
+    } catch(e) { alert('Errore di rete.'); }
+    
+    btn.disabled = false;
+    btn.innerText = "Salva & Invia a HR";
+  };
 });
