@@ -22,7 +22,8 @@ function makeRatings(){
 
 function getRating(name){
   const container = q(`.rating[data-name="${name}"]`);
-  const selected = container ? container.querySelector('.rate-cell.sel') : null;
+  if(!container) return "2";
+  const selected = container.querySelector('.rate-cell.sel');
   return selected ? selected.dataset.val : "2";
 }
 
@@ -45,30 +46,33 @@ window.addEventListener('load', () => {
     const sSquad = calcPct(['collaborazione_mutua','accessibilita_lav','armonia_team']);
     const total = Math.round((parseInt(sUff)+parseInt(sResp)+parseInt(sSquad))/3) + "%";
 
-    const data = new URLSearchParams();
-    data.append('form_type', 'cantiere');
-    data.append('timestamp', new Date().toLocaleString('it-IT'));
-    data.append('valutatore', q('#valutatore').value);
-    data.append('cantiere', q('#cantiere').value);
-    data.append('chiarezza_doc', getRating('chiarezza_doc'));
-    data.append('gestione_logistica', getRating('gestione_logistica'));
-    data.append('tempestivita_uff', getRating('tempestivita_uff'));
-    data.append('score_ufficio', sUff);
-    data.append('supporto_resp', getRating('supporto_resp'));
-    data.append('sicurezza_gest', getRating('sicurezza_gest'));
-    data.append('equita_dec', getRating('equita_dec'));
-    data.append('score_resp', sResp);
-    data.append('collaborazione_mutua', getRating('collaborazione_mutua'));
-    data.append('accessibilita_lav', getRating('accessibilita_lav'));
-    data.append('armonia_team', getRating('armonia_team'));
-    data.append('score_squadra', sSquad);
-    data.append('total_score', total);
-    data.append('note', q('#note').value);
+    let body = "form_type=cantiere";
+    body += "&timestamp=" + encodeURIComponent(new Date().toLocaleString('it-IT'));
+    body += "&valutatore=" + encodeURIComponent(q('#valutatore').value);
+    body += "&cantiere=" + encodeURIComponent(q('#cantiere').value);
+    
+    ['chiarezza_doc','gestione_logistica','tempestivita_uff','supporto_resp','sicurezza_gest','equita_dec','collaborazione_mutua','accessibilita_lav','armonia_team'].forEach(f => {
+      body += "&" + f + "=" + getRating(f);
+    });
+
+    body += "&score_ufficio=" + encodeURIComponent(sUff);
+    body += "&score_resp=" + encodeURIComponent(sResp);
+    body += "&score_squadra=" + encodeURIComponent(sSquad);
+    body += "&total_score=" + encodeURIComponent(total);
+    body += "&note=" + encodeURIComponent(q('#note').value);
 
     try {
-      await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: data });
-      alert('Feedback Cantiere Inviato!');
+      await fetch(GOOGLE_SHEET_ENDPOINT, { 
+        method: 'POST', 
+        mode: 'no-cors', 
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body 
+      });
+      alert('Feedback Cantiere Inviato correttamente!');
       location.reload();
-    } catch(e) { alert('Errore'); btn.disabled = false; }
+    } catch(e) { 
+      alert('Errore'); 
+      btn.disabled = false; 
+    }
   };
 });

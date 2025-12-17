@@ -22,7 +22,8 @@ function makeRatings(){
 
 function getRating(name){
   const container = q(`.rating[data-name="${name}"]`);
-  const selected = container ? container.querySelector('.rate-cell.sel') : null;
+  if(!container) return "2";
+  const selected = container.querySelector('.rate-cell.sel');
   return selected ? selected.dataset.val : "2";
 }
 
@@ -36,25 +37,34 @@ window.addEventListener('load', () => {
     btn.innerText = "Invio...";
 
     const cats = ['rilavorazioni','tempi','produttivita','sicurezza','qualita','competenze','collaborazione'];
-    let sum = 0; cats.forEach(c => sum += Number(getRating(c)));
+    let sum = 0; 
+    cats.forEach(c => sum += Number(getRating(c)));
     const percent = Math.round((sum / 28) * 100) + "%";
 
-    const data = new URLSearchParams();
-    data.append('form_type', 'muratore');
-    data.append('timestamp', new Date().toLocaleString('it-IT'));
-    data.append('valutatore', q('#valutatore').value);
-    data.append('valutato', q('#valutato').value);
-    data.append('cantiere', q('#cantiere').value);
-    data.append('ore', q('#ore').value);
-    data.append('incident', q('#incident').value);
-    cats.forEach(c => data.append(c, getRating(c)));
-    data.append('total_score', percent);
-    data.append('note', q('#note').value);
+    // COSTRUZIONE MANUALE DELLA STRINGA PER MASSIMA COMPATIBILITÀ
+    let body = "form_type=muratore";
+    body += "&timestamp=" + encodeURIComponent(new Date().toLocaleString('it-IT'));
+    body += "&valutatore=" + encodeURIComponent(q('#valutatore').value);
+    body += "&valutato=" + encodeURIComponent(q('#valutato').value);
+    body += "&cantiere=" + encodeURIComponent(q('#cantiere').value);
+    body += "&ore=" + encodeURIComponent(q('#ore').value);
+    body += "&incident=" + encodeURIComponent(q('#incident').value);
+    cats.forEach(c => body += "&" + c + "=" + getRating(c));
+    body += "&total_score=" + encodeURIComponent(percent);
+    body += "&note=" + encodeURIComponent(q('#note').value);
 
     try {
-      await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: data });
-      alert('Valutazione Muratore Inviata!');
+      await fetch(GOOGLE_SHEET_ENDPOINT, { 
+        method: 'POST', 
+        mode: 'no-cors', 
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body 
+      });
+      alert('Valutazione Muratore Inviata con Successo!');
       location.reload();
-    } catch(e) { alert('Errore'); btn.disabled = false; }
+    } catch(e) { 
+      alert('Errore di connessione'); 
+      btn.disabled = false; 
+    }
   };
 });
