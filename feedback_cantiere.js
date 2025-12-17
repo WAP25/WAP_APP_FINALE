@@ -20,59 +20,59 @@ function makeRatings(){
   });
 }
 
-function getVal(name){
-  const r = q(`.rating[data-name="${name}"]`);
-  const sel = r ? r.querySelector('.rate-cell.sel') : null;
-  return sel ? Number(sel.dataset.val) : 2;
+function getRatingValue(name){
+  const container = q(`.rating[data-name="${name}"]`);
+  if(!container) return 2;
+  const selected = container.querySelector('.rate-cell.sel');
+  return selected ? Number(selected.dataset.val) : 2;
 }
 
 function calcPct(arr){
-  let s = 0; arr.forEach(n => s += getVal(n));
+  let s = 0; arr.forEach(n => s += getRatingValue(n));
   return Math.round((s / (arr.length * 4)) * 100) + "%";
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
   makeRatings();
   const btn = q('#btnSend');
   if(!btn) return;
 
   btn.onclick = async () => {
+    const v = q('#valutatore').value.trim();
+    const c = q('#cantiere').value.trim();
+    if(!v || !c){ alert('Dati mancanti!'); return; }
+
     btn.disabled = true;
     btn.innerText = "Invio...";
 
     const scUff = calcPct(['chiarezza_doc','gestione_logistica','tempestivita_uff']);
     const scResp = calcPct(['supporto_resp','sicurezza_gest','equita_dec']);
     const scSquad = calcPct(['collaborazione_mutua','accessibilita_lav','armonia_team']);
-    
-    // Media totale
     const total = Math.round((parseInt(scUff)+parseInt(scResp)+parseInt(scSquad))/3) + "%";
 
-    const data = {
-      form_type: 'cantiere',
-      timestamp: new Date().toLocaleString('it-IT'),
-      valutatore: q('#valutatore').value,
-      cantiere: q('#cantiere').value,
-      chiarezza_doc: getVal('chiarezza_doc'),
-      gestione_logistica: getVal('gestione_logistica'),
-      tempestivita_uff: getVal('tempestivita_uff'),
-      score_ufficio: scUff,
-      supporto_resp: getVal('supporto_resp'),
-      sicurezza_gest: getVal('sicurezza_gest'),
-      equita_dec: getVal('equita_dec'),
-      score_resp: scResp,
-      collaborazione_mutua: getVal('collaborazione_mutua'),
-      accessibilita_lav: getVal('accessibilita_lav'),
-      armonia_team: getVal('armonia_team'),
-      score_squadra: scSquad,
-      total_score: total,
-      note: q('#note').value
-    };
-
-    const body = Object.keys(data).map(k => encodeURIComponent(k)+'='+encodeURIComponent(data[k])).join('&');
+    const params = new URLSearchParams();
+    params.append('form_type', 'cantiere');
+    params.append('timestamp', new Date().toLocaleString('it-IT'));
+    params.append('valutatore', v);
+    params.append('cantiere', c);
+    params.append('chiarezza_doc', getRatingValue('chiarezza_doc'));
+    params.append('gestione_logistica', getRatingValue('gestione_logistica'));
+    params.append('tempestivita_uff', getRatingValue('tempestivita_uff'));
+    params.append('score_ufficio', scUff);
+    params.append('supporto_resp', getRatingValue('supporto_resp'));
+    params.append('sicurezza_gest', getRatingValue('sicurezza_gest'));
+    params.append('equita_dec', getRatingValue('equita_dec'));
+    params.append('score_resp', scResp);
+    params.append('collaborazione_mutua', getRatingValue('collaborazione_mutua'));
+    params.append('accessibilita_lav', getRatingValue('accessibilita_lav'));
+    params.append('armonia_team', getRatingValue('armonia_team'));
+    params.append('score_squadra', scSquad);
+    params.append('total_score', total);
+    params.append('note', q('#note').value.trim());
 
     try {
-      await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: body, headers: {'Content-Type': 'application/x-www-form-urlencoded'} });
-      alert('Feedback Cantiere Inviato! Media: ' + total);
+      await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: params.toString() });
+      alert('Feedback Cantiere Inviato!');
       location.reload();
     } catch(e) { alert('Errore'); btn.disabled = false; }
   };
