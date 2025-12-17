@@ -64,37 +64,32 @@ function calcTotal(){
 }
 
 function saveLocal(record){
-  // Rimuovi la chiave 'id' che non viene usata nel foglio, solo nei dettagli locali
+  // Aggiunge un ID per la gestione locale
   const recordToSave = {...record, id: 'fbk_'+Math.random().toString(36).slice(2,9) };
   const all = JSON.parse(localStorage.getItem('feedback_cantiere_v1')||'[]');
   all.push(recordToSave);
   localStorage.setItem('feedback_cantiere_v1', JSON.stringify(all));
 }
 
-// *** CORREZIONE CRITICA PER INVIO MOBILE/AFFIDABILITÀ ***
-// Il metodo più affidabile per Google Apps Script: URL-encoded + no-cors
+// *** FUNZIONE DI INVIO CORRETTA E ROBUSTA ***
 async function sendToGoogleSheets(record){
   
   // 1. Converti l'oggetto 'record' in una stringa di query URL-encoded
   const queryString = Object.keys(record).map(key => {
-    // Usiamo encodeURIComponent per gestire spazi e caratteri speciali nelle note
     return encodeURIComponent(key) + '=' + encodeURIComponent(record[key]);
   }).join('&');
   
   try{
-    const sheetResp = await fetch(GOOGLE_SHEET_ENDPOINT, {
+    await fetch(GOOGLE_SHEET_ENDPOINT, {
       method: 'POST',
-      // Usa 'no-cors' per la massima compatibilità, specialmente su mobile
-      mode: 'no-cors', 
-      // Specifica il Content-Type corretto
+      mode: 'no-cors', // Fondamentale per la compatibilità con Apps Script e mobile
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: queryString 
     });
     
-    // Con 'no-cors', non possiamo leggere sheetResp.json().
-    // Se la richiesta è completata senza un errore di rete (catch), assumiamo il successo.
+    // Assumiamo il successo perché la richiesta è partita correttamente
     return true; 
     
   } catch(e) {
@@ -102,7 +97,7 @@ async function sendToGoogleSheets(record){
     return false;
   }
 }
-// *** FINE CORREZIONE CRITICA ***
+// *** FINE FUNZIONE DI INVIO CORRETTA ***
 
 
 // Quando il documento è pronto, esegui il codice
@@ -126,7 +121,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     
     const scores = calcTotal();
 
-    // L'oggetto record è allineato con i nomi dei parametri attesi da Apps Script
     const record = {
       timestamp: new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),  
       valutatore, cantiere,
@@ -140,7 +134,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
       accessibilita_lav: getRatingValue('accessibilita_lav'),
       armonia_team: getRatingValue('armonia_team'),
       
-      // I punteggi calcolati
       score_ufficio: scores.score_ufficio,
       score_resp: scores.score_resp,
       score_squadra: scores.score_squadra,
@@ -154,13 +147,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
     btn.disabled = false;
     btn.innerText = 'Invia Feedback Organizzativo';
 
-    // Salviamo localmente solo DOPO il tentativo di invio
+    // Salviamo localmente solo DOPO il tentativo di invio (come fallback/storico)
     saveLocal(record); 
     
     if(ok) {
         alert('Feedback salvato nello storico locale. Invio a Google Sheets riuscito!');
     } else {
-        alert('Attenzione: si è verificato un errore nell\'invio a Google Sheets. I dati sono stati salvati LCL (Locale) ma non è garantito che siano arrivati a Sheets. Controlla l\'URL dello script e le autorizzazioni di accesso!');
+        // Se c'è un errore, potrebbe essere un problema di rete/risposta.
+        alert('Attenzione: si è verificato un errore nell\'invio a Google Sheets. I dati sono stati salvati LCL (Locale). Controlla l\'URL dello script e le autorizzazioni di accesso!');
     }
 
     // Pulisce il form
@@ -171,7 +165,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     renderList();
   });
 
-  // Funzioni Admin/Storico (RESTO DEL CODICE INVARIATO)
+  // ... (RESTO DEL CODICE PER ADMIN/STORICO)
   q('#btnAdmin').addEventListener('click', ()=>{
     const pin = q('#adminPin').value.trim();
     if(pin === ADMIN_PIN){
