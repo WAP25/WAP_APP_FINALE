@@ -1,18 +1,18 @@
 const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UViuDefzbZFzjoAgLAbkp3flArkLRiOnJnQmXGZAEm94gBz5Zjp_6BzbPwwe/exec"; 
 
-function q(s){return document.querySelector(s)}
-function qa(s){return Array.from(document.querySelectorAll(s))}
+const q = s => document.querySelector(s);
+const qa = s => Array.from(document.querySelectorAll(s));
 
 function makeRatings(){
-  qa('.rating').forEach(r=>{
+  qa('.rating').forEach(r => {
     r.innerHTML = ''; 
-    for(let i=1;i<=4;i++){
+    for(let i=1; i<=4; i++){
       const cell = document.createElement('div');
-      cell.className='rate-cell'; 
+      cell.className = 'rate-cell'; 
       cell.innerText = i; 
       cell.dataset.val = i;
       cell.onclick = function(){
-        r.querySelectorAll('.rate-cell').forEach(x=>x.classList.remove('sel'));
+        r.querySelectorAll('.rate-cell').forEach(x => x.classList.remove('sel'));
         cell.classList.add('sel');
       };
       r.appendChild(cell);
@@ -28,12 +28,11 @@ function getRatingValue(name){
   return sel ? Number(sel.dataset.val) : 2;
 }
 
-window.onload = function(){
+window.addEventListener('load', () => {
   makeRatings();
-  
   const btn = q('#btnSend');
-  if(btn){
-    btn.onclick = async function(){
+  if(btn) {
+    btn.onclick = async function() {
       const v = q('#valutatore').value.trim();
       const valutato = q('#valutato').value.trim();
       const c = q('#cantiere').value.trim();
@@ -74,4 +73,4 @@ window.onload = function(){
       btn.innerText = "Salva & Invia a HR";
     };
   }
-};
+});
