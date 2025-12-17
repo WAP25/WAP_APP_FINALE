@@ -9,11 +9,13 @@ function makeRatings(){
     r.innerHTML = ''; 
     for(let i=1;i<=4;i++){
       const cell = document.createElement('div');
-      cell.className='rate-cell'; cell.innerText = i; cell.dataset.val = i;
-      cell.addEventListener('click', ()=>{
+      cell.className='rate-cell'; 
+      cell.innerText = i; 
+      cell.dataset.val = i;
+      cell.onclick = function(){
         r.querySelectorAll('.rate-cell').forEach(x=>x.classList.remove('sel'));
         cell.classList.add('sel');
-      });
+      };
       r.appendChild(cell);
     }
     const def = r.querySelector('.rate-cell[data-val="2"]');
@@ -33,7 +35,7 @@ function calcAverage(names){
     return Math.round((total / names.length) * 100) / 100;
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{
+window.onload = function(){
   makeRatings();
   
   const btn = q('#btnSend');
@@ -84,4 +86,4 @@ document.addEventListener('DOMContentLoaded', ()=>{
       btn.innerText = "Invia Feedback Organizzativo";
     };
   }
-});
+};
