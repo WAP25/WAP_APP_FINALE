@@ -37,40 +37,44 @@ window.addEventListener('load', () => {
       const valutato = q('#valutato').value.trim();
       const c = q('#cantiere').value.trim();
 
-      if(!v || !valutato || !c){ alert('Compila Valutatore, Dipendente e Cantiere!'); return; }
+      if(!v || !valutato || !c){ alert('Compila i campi obbligatori!'); return; }
 
       btn.disabled = true;
-      btn.innerText = "Invio...";
+      btn.innerText = "Invio in corso...";
 
-      const record = {
-        form_type: 'muratore',
-        timestamp: new Date().toLocaleString('it-IT'),
-        valutatore: v,
-        valutato: valutato,
-        cantiere: c,
-        ore: q('#ore').value,
-        incident: q('#incident').value,
-        rilavorazioni: getRatingValue('rilavorazioni'),
-        tempi: getRatingValue('tempi'),
-        produttivita: getRatingValue('produttivita'),
-        sicurezza: getRatingValue('sicurezza'),
-        qualita: getRatingValue('qualita'),
-        competenze: getRatingValue('competenze'),
-        collaborazione: getRatingValue('collaborazione'),
-        total_score: "Calcolato",
-        note: q('#note').value.trim()
-      };
+      const data = new URLSearchParams();
+      data.append('form_type', 'muratore');
+      data.append('timestamp', new Date().toLocaleString('it-IT'));
+      data.append('valutatore', v);
+      data.append('valutato', valutato);
+      data.append('cantiere', c);
+      data.append('ore', q('#ore').value);
+      data.append('incident', q('#incident').value);
+      data.append('rilavorazioni', getRatingValue('rilavorazioni'));
+      data.append('tempi', getRatingValue('tempi'));
+      data.append('produttivita', getRatingValue('produttivita'));
+      data.append('sicurezza', getRatingValue('sicurezza'));
+      data.append('qualita', getRatingValue('qualita'));
+      data.append('competenze', getRatingValue('competenze'));
+      data.append('collaborazione', getRatingValue('collaborazione'));
+      data.append('total_score', "Calcolato");
+      data.append('note', q('#note').value.trim());
 
-      const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
-      
       try {
-        await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: queryString });
-        alert('Valutazione Muratore Inviata!');
+        await fetch(GOOGLE_SHEET_ENDPOINT, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: data
+        });
+        alert('Dati inviati con successo!');
         q('#valForm').reset();
         makeRatings();
-      } catch(e) { alert('Errore invio'); }
-      btn.disabled = false;
-      btn.innerText = "Salva & Invia a HR";
+      } catch(e) {
+        alert('Errore tecnico durante l\'invio.');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Salva & Invia a HR";
+      }
     };
   }
 });
