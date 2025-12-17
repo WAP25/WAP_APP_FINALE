@@ -20,54 +20,60 @@ function makeRatings(){
   });
 }
 
-function getRatingValue(name){
-  const r = document.querySelector(`.rating[data-name="${name}"]`);
+function getVal(name){
+  const r = q(`.rating[data-name="${name}"]`);
   const sel = r ? r.querySelector('.rate-cell.sel') : null;
   return sel ? Number(sel.dataset.val) : 2;
 }
 
-window.addEventListener('load', () => {
+function calcPct(arr){
+  let s = 0; arr.forEach(n => s += getVal(n));
+  return Math.round((s / (arr.length * 4)) * 100) + "%";
+}
+
+window.addEventListener('DOMContentLoaded', () => {
   makeRatings();
   const btn = q('#btnSend');
   if(!btn) return;
 
   btn.onclick = async () => {
-    const v = q('#valutatore').value.trim();
-    const c = q('#cantiere').value.trim();
-    if(!v || !c){ alert('Valutatore e Cantiere obbligatori!'); return; }
-
     btn.disabled = true;
     btn.innerText = "Invio...";
 
-    const params = new URLSearchParams();
-    params.append('form_type', 'cantiere');
-    params.append('timestamp', new Date().toLocaleString('it-IT'));
-    params.append('valutatore', v);
-    params.append('cantiere', c);
-    params.append('chiarezza_doc', getRatingValue('chiarezza_doc'));
-    params.append('gestione_logistica', getRatingValue('gestione_logistica'));
-    params.append('tempestivita_uff', getRatingValue('tempestivita_uff'));
-    params.append('supporto_resp', getRatingValue('supporto_resp'));
-    params.append('sicurezza_gest', getRatingValue('sicurezza_gest'));
-    params.append('equita_dec', getRatingValue('equita_dec'));
-    params.append('collaborazione_mutua', getRatingValue('collaborazione_mutua'));
-    params.append('accessibilita_lav', getRatingValue('accessibilita_lav'));
-    params.append('armonia_team', getRatingValue('armonia_team'));
-    params.append('note', q('#note').value.trim());
+    const scUff = calcPct(['chiarezza_doc','gestione_logistica','tempestivita_uff']);
+    const scResp = calcPct(['supporto_resp','sicurezza_gest','equita_dec']);
+    const scSquad = calcPct(['collaborazione_mutua','accessibilita_lav','armonia_team']);
+    
+    // Media totale
+    const total = Math.round((parseInt(scUff)+parseInt(scResp)+parseInt(scSquad))/3) + "%";
+
+    const data = {
+      form_type: 'cantiere',
+      timestamp: new Date().toLocaleString('it-IT'),
+      valutatore: q('#valutatore').value,
+      cantiere: q('#cantiere').value,
+      chiarezza_doc: getVal('chiarezza_doc'),
+      gestione_logistica: getVal('gestione_logistica'),
+      tempestivita_uff: getVal('tempestivita_uff'),
+      score_ufficio: scUff,
+      supporto_resp: getVal('supporto_resp'),
+      sicurezza_gest: getVal('sicurezza_gest'),
+      equita_dec: getVal('equita_dec'),
+      score_resp: scResp,
+      collaborazione_mutua: getVal('collaborazione_mutua'),
+      accessibilita_lav: getVal('accessibilita_lav'),
+      armonia_team: getVal('armonia_team'),
+      score_squadra: scSquad,
+      total_score: total,
+      note: q('#note').value
+    };
+
+    const body = Object.keys(data).map(k => encodeURIComponent(k)+'='+encodeURIComponent(data[k])).join('&');
 
     try {
-      await fetch(GOOGLE_SHEET_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-      alert('Feedback Cantiere inviato!');
-      q('#valForm').reset();
-      makeRatings();
-    } catch(e) { alert('Errore di rete.'); }
-    
-    btn.disabled = false;
-    btn.innerText = "Invia Feedback Organizzativo";
+      await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: body, headers: {'Content-Type': 'application/x-www-form-urlencoded'} });
+      alert('Feedback Cantiere Inviato! Media: ' + total);
+      location.reload();
+    } catch(e) { alert('Errore'); btn.disabled = false; }
   };
 });

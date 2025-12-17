@@ -20,59 +20,52 @@ function makeRatings(){
   });
 }
 
-function getRatingValue(name){
-  const r = document.querySelector(`.rating[data-name="${name}"]`);
+function getVal(name){
+  const r = q(`.rating[data-name="${name}"]`);
   const sel = r ? r.querySelector('.rate-cell.sel') : null;
   return sel ? Number(sel.dataset.val) : 2;
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('DOMContentLoaded', () => {
   makeRatings();
   const btn = q('#btnSend');
   if(!btn) return;
 
   btn.onclick = async () => {
-    const v = q('#valutatore').value.trim();
-    const vt = q('#valutato').value.trim();
-    const c = q('#cantiere').value.trim();
-
-    if(!v || !vt || !c){ alert('Valutatore, Dipendente e Cantiere obbligatori!'); return; }
-
     btn.disabled = true;
     btn.innerText = "Invio...";
 
-    // Creazione URLSearchParams per invio sicuro di TUTTI i campi
-    const params = new URLSearchParams();
-    params.append('form_type', 'muratore');
-    params.append('timestamp', new Date().toLocaleString('it-IT'));
-    params.append('valutatore', v);
-    params.append('valutato', vt);
-    params.append('cantiere', c);
-    params.append('ore', q('#ore').value);
-    params.append('incident', q('#incident').value);
-    params.append('rilavorazioni', getRatingValue('rilavorazioni'));
-    params.append('tempi', getRatingValue('tempi'));
-    params.append('produttivita', getRatingValue('produttivita'));
-    params.append('sicurezza', getRatingValue('sicurezza'));
-    params.append('qualita', getRatingValue('qualita'));
-    params.append('competenze', getRatingValue('competenze'));
-    params.append('collaborazione', getRatingValue('collaborazione'));
-    params.append('total_score', "Inviato");
-    params.append('note', q('#note').value.trim());
+    // Calcolo Punteggio Totale (Media 1-4 trasformata in %)
+    const skills = ['rilavorazioni','tempi','produttivita','sicurezza','qualita','competenze','collaborazione'];
+    let sum = 0;
+    skills.forEach(s => sum += getVal(s));
+    const finalScore = Math.round(((sum / (skills.length * 4)) * 100)) + "%";
+
+    const data = {
+      form_type: 'muratore',
+      timestamp: new Date().toLocaleString('it-IT'),
+      valutatore: q('#valutatore').value,
+      valutato: q('#valutato').value,
+      cantiere: q('#cantiere').value,
+      ore: q('#ore').value,
+      incident: q('#incident').value,
+      rilavorazioni: getVal('rilavorazioni'),
+      tempi: getVal('tempi'),
+      produttivita: getVal('produttivita'),
+      sicurezza: getVal('sicurezza'),
+      qualita: getVal('qualita'),
+      competenze: getVal('competenze'),
+      collaborazione: getVal('collaborazione'),
+      total_score: finalScore,
+      note: q('#note').value
+    };
+
+    const body = Object.keys(data).map(k => encodeURIComponent(k)+'='+encodeURIComponent(data[k])).join('&');
 
     try {
-      await fetch(GOOGLE_SHEET_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-      alert('Valutazione inviata correttamente!');
-      q('#valForm').reset();
-      makeRatings();
-    } catch(e) { alert('Errore di rete.'); }
-    
-    btn.disabled = false;
-    btn.innerText = "Salva & Invia a HR";
+      await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: body, headers: {'Content-Type': 'application/x-www-form-urlencoded'} });
+      alert('Inviato con successo! Punteggio: ' + finalScore);
+      location.reload(); 
+    } catch(e) { alert('Errore invio'); btn.disabled = false; }
   };
 });
