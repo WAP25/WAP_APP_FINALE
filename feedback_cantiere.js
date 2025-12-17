@@ -33,11 +33,15 @@ function calcAverage(names){
     return Math.round((total / names.length) * 100) / 100;
 }
 
-async function sendData(record){
+async function sendToGoogleSheets(record){
+  // Aggiungiamo esplicitamente il tipo per lo script Master
+  record.form_type = 'cantiere';
+  
   const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
   try {
     await fetch(GOOGLE_SHEET_ENDPOINT, {
-      method: 'POST', mode: 'no-cors',
+      method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: queryString 
     });

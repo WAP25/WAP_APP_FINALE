@@ -25,60 +25,61 @@ function getRatingValue(name){
   return sel ? Number(sel.dataset.val) : 2;
 }
 
-async function sendData(record){
-  const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
-  try {
-    await fetch(GOOGLE_SHEET_ENDPOINT, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: queryString 
-    });
-    return true;
-  } catch(e) { return false; }
+function calcAverage(names){
+    let total = 0;
+    names.forEach(k => { total += ((getRatingValue(k) - 1) / 3) * 100; });
+    return Math.round((total / names.length) * 100) / 100;
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
   makeRatings();
+  
   q('#btnSend').addEventListener('click', async ()=>{
     const btn = q('#btnSend');
-    const v = q('#valutatore').value.trim();
-    const m = q('#muratore').value.trim();
-    const c = q('#cantiere').value.trim();
-
-    if(!v || !m || !c){ alert('Compila i campi Valutatore, Muratore e Cantiere!'); return; }
-    
     btn.disabled = true;
     btn.innerText = "Invio...";
 
-    // Calcolo punteggio muratore
-    const r1 = getRatingValue('qualita_lavoro');
-    const r2 = getRatingValue('velocita');
-    const r3 = getRatingValue('pulizia');
-    const r4 = getRatingValue('puntualita');
-    const sTot = Math.round(((r1+r2+r3+r4 - 4) / 12) * 100);
+    const sUff = calcAverage(['chiarezza_doc', 'gestione_logistica', 'tempestivita_uff']);
+    const sResp = calcAverage(['supporto_resp', 'sicurezza_gest', 'equita_dec']);
+    const sSquad = calcAverage(['collaborazione_mutua', 'accessibilita_lav', 'armonia_team']);
+    const sTot = Math.round(((sUff + sResp + sSquad) / 3) * 100) / 100;
 
     const record = {
-      form_type: 'muratore',
+      form_type: 'muratore', // <--- Fondamentale per scrivere nel foglio giusto
       timestamp: new Date().toLocaleString('it-IT'),
-      valutatore: v,
-      muratore: m,
-      cantiere: c,
-      qualita_lavoro: r1,
-      velocita: r2,
-      pulizia: r3,
-      puntualita: r4,
-      score_totale: sTot + "%",
-      note: q('#note').value.trim()
+      valutatore: q('#valutatore').value,
+      cantiere: q('#cantiere').value, // Qui metterai il nome del muratore o cantiere come preferisci
+      chiarezza_doc: getRatingValue('chiarezza_doc'),
+      gestione_logistica: getRatingValue('gestione_logistica'),
+      tempestivita_uff: getRatingValue('tempestivita_uff'),
+      score_ufficio: sUff + "%",
+      supporto_resp: getRatingValue('supporto_resp'),
+      sicurezza_gest: getRatingValue('sicurezza_gest'),
+      equita_dec: getRatingValue('equita_dec'),
+      score_resp: sResp + "%",
+      collaborazione_mutua: getRatingValue('collaborazione_mutua'),
+      accessibilita_lav: getRatingValue('accessibilita_lav'),
+      armonia_team: getRatingValue('armonia_team'),
+      score_squadra: sSquad + "%",
+      total_score: sTot + "%",
+      note: q('#note').value
     };
 
-    if(await sendData(record)){ 
-      alert('Valutazione Muratore inviata!'); 
-      q('#valForm').reset(); 
-      makeRatings(); 
-    } else { 
-      alert('Errore nell\'invio!'); 
+    const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
+    
+    try {
+      await fetch(GOOGLE_SHEET_ENDPOINT, {
+        method: 'POST', mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: queryString 
+      });
+      alert('Valutazione Muratore Inviata!');
+      q('#valForm').reset();
+      makeRatings();
+    } catch(e) {
+      alert('Errore invio');
     }
     btn.disabled = false;
-    btn.innerText = "Invia Valutazione Muratore";
+    btn.innerText = "Invia Valutazione";
   });
 });
