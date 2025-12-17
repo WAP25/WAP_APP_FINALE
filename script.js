@@ -29,27 +29,17 @@ function getRatingValue(name){
 document.addEventListener('DOMContentLoaded', ()=>{
   makeRatings();
   
-  const btnSend = q('#btnSend');
-  
-  if(btnSend){
-    btnSend.onclick = async function(){
+  const btn = q('#btnSend');
+  if(btn){
+    btn.onclick = async function(){
       const v = q('#valutatore').value.trim();
       const valutato = q('#valutato').value.trim();
       const c = q('#cantiere').value.trim();
 
-      if(!v || !valutato || !c){ 
-        alert('Compila Valutatore, Dipendente e Cantiere!'); 
-        return; 
-      }
+      if(!v || !valutato || !c){ alert('Compila Valutatore, Dipendente e Cantiere!'); return; }
 
-      btnSend.disabled = true;
-      btnSend.innerText = "Invio...";
-
-      // Calcolo rapido punteggio medio per total_score
-      const r_values = ['rilavorazioni','tempi','produttivita','sicurezza','qualita','competenze','collaborazione'];
-      let sum = 0;
-      r_values.forEach(name => sum += getRatingValue(name));
-      const avg = Math.round(((sum / r_values.length) / 4) * 100);
+      btn.disabled = true;
+      btn.innerText = "Invio...";
 
       const record = {
         form_type: 'muratore',
@@ -66,28 +56,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
         qualita: getRatingValue('qualita'),
         competenze: getRatingValue('competenze'),
         collaborazione: getRatingValue('collaborazione'),
-        total_score: avg + "%",
+        total_score: "Calcolato",
         note: q('#note').value.trim()
       };
 
       const queryString = Object.keys(record).map(k => encodeURIComponent(k)+'='+encodeURIComponent(record[k])).join('&');
       
       try {
-        await fetch(GOOGLE_SHEET_ENDPOINT, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: queryString 
-        });
-        alert('Valutazione Muratore Inviata con successo!');
+        await fetch(GOOGLE_SHEET_ENDPOINT, { method: 'POST', mode: 'no-cors', body: queryString });
+        alert('Valutazione Muratore Inviata!');
         q('#valForm').reset();
         makeRatings();
-      } catch(e) {
-        alert('Errore durante l\'invio. Controlla la connessione.');
-      }
-      
-      btnSend.disabled = false;
-      btnSend.innerText = "Salva & Invia a HR";
+      } catch(e) { alert('Errore invio'); }
+      btn.disabled = false;
+      btn.innerText = "Salva & Invia a HR";
     };
   }
 });
