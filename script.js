@@ -35,21 +35,21 @@ window.addEventListener('load', () => {
     const v = q('#valutatore').value.trim();
     const vt = q('#valutato').value.trim();
     const c = q('#cantiere').value.trim();
-    
+
     if(!v || !vt || !c){
       alert("Valutatore, Dipendente e Cantiere sono obbligatori!");
       return;
     }
 
     btn.disabled = true;
-    btn.innerText = "Invio in corso...";
+    btn.innerText = "Invio...";
 
     const cats = ['rilavorazioni','tempi','produttivita','sicurezza','qualita','competenze','collaborazione'];
-    let sum = 0;
-    cats.forEach(cat => sum += Number(getRating(cat)));
-    const percent = Math.round((sum / 28) * 100) + "%";
+    let somma = 0;
+    cats.forEach(cat => somma += Number(getRating(cat)));
+    const percent = Math.round((somma / 28) * 100) + "%";
 
-    // Costruiamo i dati come oggetto semplice
+    // Creazione record piatto (Flat Object)
     const record = {
       form_type: 'muratore',
       timestamp: new Date().toLocaleString('it-IT'),
@@ -69,7 +69,7 @@ window.addEventListener('load', () => {
       note: q('#note').value.trim()
     };
 
-    // Trasformiamo in stringa per l'invio (metodo super-compatibile)
+    // Costruzione stringa di invio (Metodo compatibile al 100%)
     const queryString = Object.keys(record)
       .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(record[k]))
       .join('&');
@@ -80,10 +80,10 @@ window.addEventListener('load', () => {
         mode: 'no-cors', 
         body: queryString
       });
-      alert('Valutazione inviata con successo!');
+      alert('Valutazione Muratore Inviata con Successo!');
       location.reload();
-    } catch(e) { 
-      alert('Errore di rete. Riprova.'); 
+    } catch(e) {
+      alert('Errore di invio. Controlla la connessione.');
       btn.disabled = false;
       btn.innerText = "Salva & Invia a HR";
     }
