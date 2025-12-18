@@ -21,10 +21,9 @@ function makeRatings(){
 }
 
 function getRating(name){
-  const container = q(`.rating[data-name="${name}"]`);
-  if(!container) return "2";
-  const selected = container.querySelector('.rate-cell.sel');
-  return selected ? selected.dataset.val : "2";
+  const r = q(`.rating[data-name="${name}"]`);
+  const sel = r ? r.querySelector('.rate-cell.sel') : null;
+  return sel ? sel.dataset.val : "2";
 }
 
 function calcPct(arr){
@@ -46,33 +45,31 @@ window.addEventListener('load', () => {
     const sSquad = calcPct(['collaborazione_mutua','accessibilita_lav','armonia_team']);
     const total = Math.round((parseInt(sUff)+parseInt(sResp)+parseInt(sSquad))/3) + "%";
 
-    let body = "form_type=cantiere";
-    body += "&timestamp=" + encodeURIComponent(new Date().toLocaleString('it-IT'));
-    body += "&valutatore=" + encodeURIComponent(q('#valutatore').value);
-    body += "&cantiere=" + encodeURIComponent(q('#cantiere').value);
+    const params = new URLSearchParams();
+    params.append('form_type', 'cantiere');
+    params.append('timestamp', new Date().toLocaleString('it-IT'));
+    params.append('valutatore', q('#valutatore').value);
+    params.append('cantiere', q('#cantiere').value);
     
     ['chiarezza_doc','gestione_logistica','tempestivita_uff','supporto_resp','sicurezza_gest','equita_dec','collaborazione_mutua','accessibilita_lav','armonia_team'].forEach(f => {
-      body += "&" + f + "=" + getRating(f);
+      params.append(f, getRating(f));
     });
 
-    body += "&score_ufficio=" + encodeURIComponent(sUff);
-    body += "&score_resp=" + encodeURIComponent(sResp);
-    body += "&score_squadra=" + encodeURIComponent(sSquad);
-    body += "&total_score=" + encodeURIComponent(total);
-    body += "&note=" + encodeURIComponent(q('#note').value);
+    params.append('score_ufficio', sUff);
+    params.append('score_resp', sResp);
+    params.append('score_squadra', sSquad);
+    params.append('total_score', total);
+    params.append('note', q('#note').value);
 
     try {
       await fetch(GOOGLE_SHEET_ENDPOINT, { 
         method: 'POST', 
         mode: 'no-cors', 
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body 
+        body: params.toString() 
       });
-      alert('Feedback Cantiere Inviato correttamente!');
+      alert('Feedback Cantiere Inviato!');
       location.reload();
-    } catch(e) { 
-      alert('Errore'); 
-      btn.disabled = false; 
-    }
+    } catch(e) { alert('Errore'); btn.disabled = false; }
   };
 });
