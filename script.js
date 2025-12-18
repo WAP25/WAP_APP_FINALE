@@ -3,7 +3,6 @@ const GOOGLE_SHEET_ENDPOINT = "https://script.google.com/macros/s/AKfycbwhR5X1UV
 const q = s => document.querySelector(s);
 const qa = s => Array.from(document.querySelectorAll(s));
 
-// Crea le celle 1-4
 function makeRatings(){
   qa('.rating').forEach(r => {
     r.innerHTML = ''; 
@@ -21,7 +20,6 @@ function makeRatings(){
   });
 }
 
-// Recupera il numero selezionato (1-4)
 function getRating(name){
   const container = q(`.rating[data-name="${name}"]`);
   const selected = container ? container.querySelector('.rate-cell.sel') : null;
@@ -34,51 +32,58 @@ window.addEventListener('load', () => {
   if(!btn) return;
 
   btn.onclick = async () => {
-    const val_valutatore = q('#valutatore').value.trim();
-    const val_valutato = q('#valutato').value.trim();
-    const val_cantiere = q('#cantiere').value.trim();
-
-    if(!val_valutatore || !val_valutato || !val_cantiere){
+    const v = q('#valutatore').value.trim();
+    const vt = q('#valutato').value.trim();
+    const c = q('#cantiere').value.trim();
+    
+    if(!v || !vt || !c){
       alert("Valutatore, Dipendente e Cantiere sono obbligatori!");
       return;
     }
 
     btn.disabled = true;
-    btn.innerText = "Invio...";
+    btn.innerText = "Invio in corso...";
 
-    // Categorie per il calcolo percentuale (7 categorie)
     const cats = ['rilavorazioni','tempi','produttivita','sicurezza','qualita','competenze','collaborazione'];
-    let somma = 0;
-    cats.forEach(c => somma += Number(getRating(c)));
-    const percent = Math.round((somma / 28) * 100) + "%";
+    let sum = 0;
+    cats.forEach(cat => sum += Number(getRating(cat)));
+    const percent = Math.round((sum / 28) * 100) + "%";
 
-    // Prepariamo i dati esattamente come li vuole Codice.gs
-    const params = new URLSearchParams();
-    params.append('form_type', 'muratore');
-    params.append('timestamp', new Date().toLocaleString('it-IT'));
-    params.append('valutatore', val_valutatore);
-    params.append('valutato', val_valutato);
-    params.append('cantiere', val_cantiere);
-    params.append('ore', q('#ore').value);
-    params.append('incident', q('#incident').value);
-    
-    // Aggiungiamo i punteggi uno per uno
-    cats.forEach(c => params.append(c, getRating(c)));
+    // Costruiamo i dati come oggetto semplice
+    const record = {
+      form_type: 'muratore',
+      timestamp: new Date().toLocaleString('it-IT'),
+      valutatore: v,
+      valutato: vt,
+      cantiere: c,
+      ore: q('#ore').value,
+      incident: q('#incident').value,
+      rilavorazioni: getRating('rilavorazioni'),
+      tempi: getRating('tempi'),
+      produttivita: getRating('produttivita'),
+      sicurezza: getRating('sicurezza'),
+      qualita: getRating('qualita'),
+      competenze: getRating('competenze'),
+      collaborazione: getRating('collaborazione'),
+      total_score: percent,
+      note: q('#note').value.trim()
+    };
 
-    params.append('total_score', percent);
-    params.append('note', q('#note').value.trim());
+    // Trasformiamo in stringa per l'invio (metodo super-compatibile)
+    const queryString = Object.keys(record)
+      .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(record[k]))
+      .join('&');
 
     try {
       await fetch(GOOGLE_SHEET_ENDPOINT, { 
         method: 'POST', 
         mode: 'no-cors', 
-        body: params.toString(),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        body: queryString
       });
-      alert('Valutazione Muratore Inviata con Successo!');
+      alert('Valutazione inviata con successo!');
       location.reload();
-    } catch(e) {
-      alert('Errore di invio. Riprova.');
+    } catch(e) { 
+      alert('Errore di rete. Riprova.'); 
       btn.disabled = false;
       btn.innerText = "Salva & Invia a HR";
     }
