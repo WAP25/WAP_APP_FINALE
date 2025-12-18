@@ -29,18 +29,8 @@ function getRating(name){
 window.addEventListener('load', () => {
   makeRatings();
   const btn = q('#btnSend');
-  if(!btn) return;
-
+  
   btn.onclick = async () => {
-    const v = q('#valutatore').value.trim();
-    const vt = q('#valutato').value.trim();
-    const c = q('#cantiere').value.trim();
-
-    if(!v || !vt || !c){
-      alert("Compila Valutatore, Dipendente e Cantiere!");
-      return;
-    }
-
     btn.disabled = true;
     btn.innerText = "Invio...";
 
@@ -49,31 +39,39 @@ window.addEventListener('load', () => {
     cats.forEach(cat => somma += Number(getRating(cat)));
     const percent = Math.round((somma / 28) * 100) + "%";
 
-    const params = new URLSearchParams();
-    params.append('form_type', 'muratore');
-    params.append('timestamp', new Date().toLocaleString('it-IT'));
-    params.append('valutatore', v);
-    params.append('valutato', vt);
-    params.append('cantiere', c);
-    params.append('ore', q('#ore').value);
-    params.append('incident', q('#incident').value);
-    
-    cats.forEach(cat => params.append(cat, getRating(cat)));
+    // Prepariamo i dati
+    const payload = {
+      form_type: 'muratore',
+      valutatore: q('#valutatore').value,
+      valutato: q('#valutato').value,
+      cantiere: q('#cantiere').value,
+      ore: q('#ore').value,
+      incident: q('#incident').value,
+      rilavorazioni: getRating('rilavorazioni'),
+      tempi: getRating('tempi'),
+      produttivita: getRating('produttivita'),
+      sicurezza: getRating('sicurezza'),
+      qualita: getRating('qualita'),
+      competenze: getRating('competenze'),
+      collaborazione: getRating('collaborazione'),
+      total_score: percent,
+      note: q('#note').value
+    };
 
-    params.append('total_score', percent);
-    params.append('note', q('#note').value.trim());
+    // Trasformazione manuale in stringa per evitare errori di mappatura
+    const encData = Object.keys(payload).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(payload[k])).join('&');
 
     try {
       await fetch(GOOGLE_SHEET_ENDPOINT, { 
         method: 'POST', 
         mode: 'no-cors', 
-        body: params.toString(),
+        body: encData,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
-      alert('Valutazione Muratore Inviata!');
+      alert('Inviato!');
       location.reload();
     } catch(e) {
-      alert('Errore invio');
+      alert('Errore');
       btn.disabled = false;
     }
   };
